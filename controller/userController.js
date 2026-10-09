@@ -1,6 +1,7 @@
 const dbConnection = require("../db/dbConfige");
 const bcrypt = require("bcrypt");
 const { StatusCodes } = require("http-status-codes");
+const jwt = require("jsonwebtoken");
 
 async function register(req, res) {
     const{ userName,firstName,lastName,email,password}=req.body;
@@ -28,10 +29,33 @@ async function register(req, res) {
 
 }
 async function login(req, res) {
-    res.send("user logged in successfully");
+    const { email, password } = req.body;
+    if(!email || !password){
+        return res.status(StatusCodes.BAD_REQUEST).json({message:"please fill all required fields!"})
+    }
+    try{
+        const [user]=await dbConnection.query("SELECT userName, userId, password FROM users WHERE email=?",[email]);
+        if(user.length===0){
+            return res.status(StatusCodes.BAD_REQUEST).json({message:"user not found!"})
+        }
+        //compare the password
+        const isMatch= await bcrypt.compare(password,user[0].password)
+        if(!isMatch){
+            return res.status(StatusCodes.BAD_REQUEST).json({message:"invalid credentials!"})
+        }
+        //generate jwt token
+        const userName=user[0].userName;
+        const userId=user[0].userId;
+        const token = jwt.sign({ userName, userId }, "secret", { expiresIn: "1d" });
+        return res.status(StatusCodes.OK).json({message:"user logged in successfully!",token})
+
+    }catch(error){
+        console.log(error.message)
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({message:"something wonts wrong try again latter!"})
+    }
 }
 async function checkUser(req, res) {
-    res.send("user is logged in");
+    res.send("user checked");
 }
 
 module.exports = { register, login, checkUser };
