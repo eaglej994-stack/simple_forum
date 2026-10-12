@@ -1,5 +1,6 @@
 const dbConnection = require("../db/dbConfige");
 const bcrypt = require("bcrypt");
+const { json } = require("body-parser");
 const { StatusCodes } = require("http-status-codes");
 const jwt = require("jsonwebtoken");
 
@@ -46,7 +47,7 @@ async function login(req, res) {
         //generate jwt token
         const userName=user[0].userName;
         const userId=user[0].userId;
-        const token = jwt.sign({ userName, userId }, "secret", { expiresIn: "1d" });
+        const token = jwt.sign({ userName, userId }, process.env.JWT_SECRET, { expiresIn: "1d" });
         return res.status(StatusCodes.OK).json({message:"user logged in successfully!",token})
 
     }catch(error){
@@ -55,7 +56,18 @@ async function login(req, res) {
     }
 }
 async function checkUser(req, res) {
-    res.send("user checked");
+    try{
+        const userName=req.user.userName
+        const userId= req.user.userId
+        return res.status(StatusCodes.OK).json({message:"valid user",userName,userId})
+    // res.send("user checked");
+    
+    }catch(error){
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            message:"something went wrong"
+        })
+
+    }
 }
 
 module.exports = { register, login, checkUser };

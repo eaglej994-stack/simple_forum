@@ -1,3 +1,4 @@
+require("dotenv").config()
 const express = require('express');
 const app = express();
 const port = 3000;
@@ -7,6 +8,12 @@ const dbConnection = require('./db/dbConfige');
 
 const userRoutes = require('./Routes/userRoutes');
 
+//authentication middleware
+const authMiddleware = require("./middleWare/authMiddleware");
+
+//question route middleware file
+const questionsRoutes=require("./Routes/questionRoute")
+
 //JSON middleware to extract extract JSON data
 app.use(express.json());
 
@@ -14,6 +21,7 @@ app.use(express.json());
 app.use('/api/user',userRoutes);
 
 //question routes middleware
+app.use("/api/question",authMiddleware,questionsRoutes)
 
 // answer route middleware
 
